@@ -1,11 +1,11 @@
-```jsx
 import { useEffect, useState } from 'react'
 
 const API_URL = 'https://hod-availability-backend.onrender.com'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [checkingLogin, setCheckingLogin] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!sessionStorage.getItem('hodToken')
+  )
 
   const [hodId, setHodId] = useState('')
   const [password, setPassword] = useState('')
@@ -15,67 +15,7 @@ function App() {
   const [status, setStatus] = useState('Loading...')
   const [expectedReturnTime, setExpectedReturnTime] = useState('')
 
-  // ==========================================
-  // CHECK SAVED LOGIN TOKEN
-  // ==========================================
-
-  useEffect(() => {
-    const checkLogin = async () => {
-      const token = sessionStorage.getItem('hodToken')
-
-      // No saved token = show login page
-      if (!token) {
-        setIsLoggedIn(false)
-        setCheckingLogin(false)
-        return
-      }
-
-      try {
-        /*
-          We verify the token by calling the protected
-          status API.
-        */
-        const response = await fetch(`${API_URL}/api/status`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-
-        if (!response.ok) {
-          // Token is invalid/expired
-          sessionStorage.removeItem('hodToken')
-          setIsLoggedIn(false)
-          setCheckingLogin(false)
-          return
-        }
-
-        const data = await response.json()
-
-        setStatus(data.status)
-        setExpectedReturnTime(data.expectedReturnTime || '')
-        setIsLoggedIn(true)
-        setCheckingLogin(false)
-
-      } catch (error) {
-        console.error(error)
-
-        /*
-          If backend cannot be reached, don't automatically
-          show the dashboard.
-        */
-        setIsLoggedIn(false)
-        setCheckingLogin(false)
-      }
-    }
-
-    checkLogin()
-  }, [])
-
-  // ==========================================
   // LOGIN
-  // ==========================================
-
   const handleLogin = async (e) => {
     e.preventDefault()
 
@@ -89,8 +29,8 @@ function App() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          hodId: hodId,
-          password: password
+          hodId,
+          password
         })
       })
 
@@ -102,133 +42,89 @@ function App() {
         return
       }
 
-      // Save token
       sessionStorage.setItem('hodToken', data.token)
 
-      // Login successful
       setIsLoggedIn(true)
       setPassword('')
       setLoginError('')
       setLoggingIn(false)
-
     } catch (error) {
-      console.error(error)
+      console.error('Login error:', error)
 
       setLoginError('Unable to connect to backend')
       setLoggingIn(false)
     }
   }
 
-  // ==========================================
-  // LOAD CURRENT STATUS
-  // ==========================================
-
+  // LOAD STATUS
   useEffect(() => {
     if (!isLoggedIn) {
       return
     }
 
-    const token = sessionStorage.getItem('hodToken')
-
-    fetch(`${API_URL}/api/status`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then(async (response) => {
-        const data = await response.json()
+    const loadStatus = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/status`)
 
         if (!response.ok) {
-          throw new Error(
-            data.error || 'Authentication required'
-          )
+          throw new Error('Backend error')
         }
 
-        return data
-      })
-      .then((data) => {
+        const data = await response.json()
+
         setStatus(data.status)
-        setExpectedReturnTime(
-          data.expectedReturnTime || ''
-        )
-      })
-      .catch((error) => {
-        console.error(error)
+        setExpectedReturnTime(data.expectedReturnTime || '')
+      } catch (error) {
+        console.error('Status error:', error)
+        setStatus('Unable to connect to backend')
+      }
+    }
 
-        if (
-          error.message === 'Invalid or expired token' ||
-          error.message === 'Authentication required'
-        ) {
-          sessionStorage.removeItem('hodToken')
-          setIsLoggedIn(false)
-          setLoginError(
-            'Your session has expired. Please login again.'
-          )
-        } else {
-          setStatus('Unable to connect to backend')
-        }
-      })
-
+    loadStatus()
   }, [isLoggedIn])
 
-  // ==========================================
   // UPDATE STATUS
-  // ==========================================
-
-  const updateStatus = (newStatus) => {
+  const updateStatus = async (newStatus) => {
     const token = sessionStorage.getItem('hodToken')
 
-    fetch(`${API_URL}/api/status`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        status: newStatus,
-        expectedReturnTime: expectedReturnTime
+    try {
+      const response = await fetch(`${API_URL}/api/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          expectedReturnTime
+        })
       })
-    })
-      .then(async (response) => {
-        const data = await response.json()
 
-        if (!response.ok) {
-          throw new Error(
-            data.error || 'Unable to update status'
-          )
-        }
+      const data = await response.json()
 
-        return data
-      })
-      .then((data) => {
-        setStatus(data.status)
-        setExpectedReturnTime(
-          data.expectedReturnTime || ''
-        )
-      })
-      .catch((error) => {
-        console.error(error)
-
+      if (!response.ok) {
         if (
-          error.message === 'Invalid or expired token' ||
-          error.message === 'Authentication required'
+          data.error === 'Invalid or expired token' ||
+          data.error === 'Authentication required'
         ) {
           sessionStorage.removeItem('hodToken')
           setIsLoggedIn(false)
-          setLoginError(
-            'Your session has expired. Please login again.'
-          )
-        } else {
-          setStatus('Unable to update status')
+          setLoginError('Your session has expired. Please login again.')
+          return
         }
-      })
+
+        throw new Error(data.error || 'Unable to update status')
+      }
+
+      setStatus(data.status)
+      setExpectedReturnTime(data.expectedReturnTime || '')
+    } catch (error) {
+      console.error('Update status error:', error)
+      setStatus('Unable to update status')
+    }
   }
 
-  // ==========================================
   // LOGOUT
-  // ==========================================
-
   const handleLogout = () => {
     sessionStorage.removeItem('hodToken')
 
@@ -240,12 +136,9 @@ function App() {
     setExpectedReturnTime('')
   }
 
-  // ==========================================
   // FORMAT TIME
-  // ==========================================
-
   const formatTime = (time) => {
-    if (!time) {
+    if (!time || time === '00:00') {
       return 'Not specified'
     }
 
@@ -258,10 +151,7 @@ function App() {
     return `${displayHour}:${minutes} ${period}`
   }
 
-  // ==========================================
-  // STATUS CSS CLASS
-  // ==========================================
-
+  // STATUS CLASS
   const getStatusClass = () => {
     if (status === 'Available') {
       return 'available'
@@ -282,50 +172,16 @@ function App() {
     return 'unknown'
   }
 
-  // ==========================================
-  // CHECKING LOGIN SCREEN
-  // ==========================================
-
-  if (checkingLogin) {
-    return (
-      <div className="app">
-
-        <div className="container">
-
-          <div className="header">
-
-            <div className="header-icon">
-              H
-            </div>
-
-            <h1>
-              HOD Availability System
-            </h1>
-
-            <p>
-              Checking login...
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-    )
-  }
-
-  // ==========================================
+  // =========================
   // LOGIN PAGE
-  // ==========================================
+  // =========================
 
   if (!isLoggedIn) {
     return (
       <div className="app">
-
         <div className="container">
 
           <div className="header">
-
             <div className="header-icon">
               H
             </div>
@@ -337,7 +193,6 @@ function App() {
             <p>
               HOD Login
             </p>
-
           </div>
 
           <div className="card">
@@ -357,9 +212,7 @@ function App() {
                 <input
                   type="text"
                   value={hodId}
-                  onChange={(e) =>
-                    setHodId(e.target.value)
-                  }
+                  onChange={(e) => setHodId(e.target.value)}
                   placeholder="Enter HOD ID"
                   autoComplete="username"
                   required
@@ -376,9 +229,7 @@ function App() {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
                   autoComplete="current-password"
                   required
@@ -406,9 +257,7 @@ function App() {
                   className="available-btn"
                   disabled={loggingIn}
                 >
-                  {loggingIn
-                    ? 'Logging in...'
-                    : 'Login'}
+                  {loggingIn ? 'Logging in...' : 'Login'}
                 </button>
 
               </div>
@@ -422,14 +271,13 @@ function App() {
           </p>
 
         </div>
-
       </div>
     )
   }
 
-  // ==========================================
+  // =========================
   // HOD DASHBOARD
-  // ==========================================
+  // =========================
 
   return (
     <div className="app">
@@ -480,9 +328,7 @@ function App() {
 
           </div>
 
-          <div
-            className={`status-badge ${getStatusClass()}`}
-          >
+          <div className={`status-badge ${getStatusClass()}`}>
 
             <span className="status-dot"></span>
 
@@ -490,11 +336,7 @@ function App() {
 
           </div>
 
-          {/* RETURN TIME ONLY FOR IN MEETING AND AWAY */}
-
-          {(status === 'In Meeting' ||
-            status === 'Away') && (
-
+          {(status === 'In Meeting' || status === 'Away') && (
             <div className="return-section">
 
               <label>
@@ -505,9 +347,7 @@ function App() {
                 type="time"
                 value={expectedReturnTime}
                 onChange={(e) =>
-                  setExpectedReturnTime(
-                    e.target.value
-                  )
+                  setExpectedReturnTime(e.target.value)
                 }
               />
 
@@ -516,15 +356,12 @@ function App() {
                 Expected Return:{' '}
 
                 <strong>
-                  {formatTime(
-                    expectedReturnTime
-                  )}
+                  {formatTime(expectedReturnTime)}
                 </strong>
 
               </div>
 
             </div>
-
           )}
 
           <div className="divider"></div>
@@ -537,36 +374,28 @@ function App() {
 
             <button
               className="available-btn"
-              onClick={() =>
-                updateStatus('Available')
-              }
+              onClick={() => updateStatus('Available')}
             >
               Available
             </button>
 
             <button
               className="meeting-btn"
-              onClick={() =>
-                updateStatus('In Meeting')
-              }
+              onClick={() => updateStatus('In Meeting')}
             >
               In Meeting
             </button>
 
             <button
               className="away-btn"
-              onClick={() =>
-                updateStatus('Away')
-              }
+              onClick={() => updateStatus('Away')}
             >
               Away
             </button>
 
             <button
               className="unavailable-btn"
-              onClick={() =>
-                updateStatus('Not Available')
-              }
+              onClick={() => updateStatus('Not Available')}
             >
               Not Available
             </button>
@@ -586,4 +415,3 @@ function App() {
 }
 
 export default App
-```
