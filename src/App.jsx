@@ -78,6 +78,7 @@ const HOME_STYLES = `
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 .faculty-desk-logo {
   width: 280px;
@@ -85,6 +86,9 @@ const HOME_STYLES = `
   height: auto;
   display: block;
   object-fit: contain;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 .brand {
   display: flex;
