@@ -88,6 +88,7 @@ const HOME_STYLES = `
   object-fit: contain;
   position: absolute;
   left: 50%;
+  top: 10px;
   transform: translateX(-50%);
 }
 .brand {
