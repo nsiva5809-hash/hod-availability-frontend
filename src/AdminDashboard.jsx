@@ -3,7 +3,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import facultyDeskLogo from "./assets/faculty-desk-logo.png";
 
-const API_URL = "http://localhost:5000";
+const API_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://hod-availability-backend.onrender.com";
 
 function AdminDashboard({ adminUser, onLogout }) {
   // ==================================================

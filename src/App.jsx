@@ -1003,7 +1003,7 @@ const FACULTY_DASHBOARD_PRO_STYLES = `
 .fd-sidebar-section-spacer { height: 1px; }
 @media (max-width: 1100px) { .fd-overview { grid-template-columns: repeat(2,minmax(0,1fr)); } .fd-body-grid { grid-template-columns: 1fr; } }
 @media (max-width: 800px) { .fd-sidebar { width: 205px; } .fd-main { padding:22px 18px 40px; } .fd-topbar { padding:0 18px; } .fd-date-card { display:none; } }
-@media (max-width: 620px) { .fd-sidebar { display:none; } .fd-menu { display:block; } .fd-search { width: 52vw; } .fd-profile-name,.fd-profile-role { display:none; } .fd-overview { grid-template-columns:1fr; } .fd-welcome h1 { font-size:25px; } }
+@media (max-width: 620px) { .fd-sidebar { display:flex; } .fd-menu { display:block; } .fd-search { width: 52vw; } .fd-profile-name,.fd-profile-role { display:none; } .fd-overview { grid-template-columns:1fr; } .fd-welcome h1 { font-size:25px; } }
 `;
 
 
