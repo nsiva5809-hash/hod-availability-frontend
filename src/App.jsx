@@ -4971,19 +4971,47 @@ const handleAdminLogout =
                 "HOD"}
             </p>
 
-            <p>
-              <strong>
-                Current Status:
-              </strong>{" "}
+            <div
+  style={{
+    marginTop: "10px",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    background:
+      hodStatus === "Available"
+        ? "#f0fdf4"
+        : hodStatus === "Unavailable"
+        ? "#fef2f2"
+        : "#f8fafc",
+    border:
+      hodStatus === "Available"
+        ? "1px solid #bbf7d0"
+        : hodStatus === "Unavailable"
+        ? "1px solid #fecaca"
+        : "1px solid #e2e8f0",
+  }}
+>
+  <strong style={{ color: "#334155" }}>
+    Current Status:
+  </strong>{" "}
 
-              {hodStatus ===
-              "Available"
-                ? "🟢 Available"
-                : hodStatus ===
-                  "Unavailable"
-                ? "🔴 Unavailable"
-                : "Loading..."}
-            </p>
+  <span
+    style={{
+      color:
+        hodStatus === "Available"
+          ? "#15803d"
+          : hodStatus === "Unavailable"
+          ? "#dc2626"
+          : "#64748b",
+      fontWeight: "800",
+    }}
+  >
+    {hodStatus === "Available"
+      ? "🟢 Available"
+      : hodStatus === "Unavailable"
+      ? "🔴 Unavailable"
+      : "Loading..."}
+  </span>
+</div>
 
             <label>
               Status Message
