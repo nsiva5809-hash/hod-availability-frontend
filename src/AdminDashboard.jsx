@@ -917,6 +917,9 @@ const handleFacultyStatusChange = async (
       ============================================== */}
 
       <aside
+        className={`admin-sidebar ${
+          mobileMenuOpen ? "mobile-open" : ""
+        }`}
         style={{
           ...styles.sidebar,
           ...(mobileMenuOpen
@@ -1044,13 +1047,24 @@ const handleFacultyStatusChange = async (
         </div>
       </aside>
 
+      {mobileMenuOpen && (
+        <div
+          className="admin-sidebar-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* ==============================================
           MOBILE HEADER
       ============================================== */}
 
-     <div style={styles.mobileHeader}>
+     <div
+  className="admin-mobile-header"
+  style={styles.mobileHeader}
+>
   <button
-    style={styles.menuButton}
+      className="admin-mobile-menu"
+  style={styles.menuButton}
     onClick={() =>
       setMobileMenuOpen(
         !mobileMenuOpen
@@ -1078,7 +1092,7 @@ const handleFacultyStatusChange = async (
       <main style={styles.main}>
         {/* TOP HEADER */}
 
-        <header style={styles.topHeader}>
+        <header className="admin-top-header" style={styles.topHeader}>
           <div>
             <div style={styles.breadcrumb}>
               Administration
@@ -1154,7 +1168,7 @@ const handleFacultyStatusChange = async (
 
         {activeSection === "overview" && (
           <>
-            <div style={styles.welcomeCard}>
+            <div className="admin-welcome-card" style={styles.welcomeCard}>
               <div>
                 <div style={styles.welcomeSmall}>
                   WELCOME BACK
@@ -1180,7 +1194,7 @@ const handleFacultyStatusChange = async (
 
             {/* STAT CARDS */}
 
-            <div style={styles.statsGrid}>
+            <div className="admin-stats-grid" style={styles.statsGrid}>
               <div
                 style={{
                   ...styles.statCard,
@@ -4187,42 +4201,145 @@ const styles = {
 // RESPONSIVE CSS
 // ==================================================
 
-const responsiveStyle = document.createElement(
-  "style"
-);
+const responsiveStyle = document.createElement("style");
 
 responsiveStyle.innerHTML = `
+  /* Tablet */
   @media (max-width: 1000px) {
-    .admin-dashboard-stats {
-      grid-template-columns: repeat(2, 1fr);
+    .admin-stats-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
     }
   }
 
-  @media (max-width: 800px) {
+  /* Mobile */
+  @media (max-width: 700px) {
+    html,
     body {
+      width: 100%;
+      max-width: 100%;
       overflow-x: hidden;
     }
-  }
 
-  @media (max-width: 700px) {
-    .admin-dashboard-mobile {
-      display: block;
+    /* Sidebar is off-screen by default */
+    .admin-sidebar {
+      width: 255px !important;
+      max-width: 85vw;
+      transform: translateX(-110%) !important;
+      transition: transform 0.25s ease !important;
+      z-index: 1200 !important;
+    }
+
+    /* Sidebar opens when hamburger is clicked */
+    .admin-sidebar.mobile-open {
+      transform: translateX(0) !important;
+    }
+
+    /* Dark overlay behind open sidebar */
+    .admin-sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 1100;
+    }
+
+    /* Main content becomes full width */
+    main {
+      margin-left: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      padding: 72px 16px 25px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Mobile header */
+    .admin-mobile-header {
+      display: flex !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 58px;
+      z-index: 1050;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      box-sizing: border-box;
+    }
+
+    .admin-mobile-menu {
+      border: none;
+      background: transparent;
+      font-size: 25px;
+      cursor: pointer;
+      padding: 5px;
+      line-height: 1;
+    }
+
+    /* Desktop profile is hidden on mobile */
+    .admin-top-header > div:last-child {
+      display: none !important;
+    }
+
+    .admin-top-header {
+      gap: 12px;
+      margin-bottom: 18px !important;
+    }
+
+    /* Dashboard cards */
+    .admin-stats-grid {
+      grid-template-columns: 1fr !important;
+      width: 100% !important;
+    }
+
+    .admin-welcome-card {
+      padding: 20px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Prevent forms/cards from overflowing */
+    main * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      max-width: 100%;
+    }
+
+    /* Tables scroll horizontally instead of squeezing */
+    .table-wrapper {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      min-width: 650px;
+    }
+
+    /* Footer */
+    footer {
+      flex-direction: column !important;
+      gap: 8px;
     }
   }
 `;
 
 if (
   typeof document !== "undefined" &&
-  !document.getElementById(
-    "admin-dashboard-responsive-style"
-  )
+  !document.getElementById("admin-dashboard-responsive-style")
 ) {
-  responsiveStyle.id =
-    "admin-dashboard-responsive-style";
-
-  document.head.appendChild(
-    responsiveStyle
-  );
+  responsiveStyle.id = "admin-dashboard-responsive-style";
+  document.head.appendChild(responsiveStyle);
 }
 
 export default AdminDashboard;
